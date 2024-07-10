@@ -77,10 +77,13 @@ func createSymlinks(dryRun bool) error {
 func main() {
 	var dryRun bool
 	app := &cli.App{
+		Name:  "gdot",
+		Usage: "Creates symlinks for files and directories within the current working directory to the user's home directory",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:        "dry-run",
 				Aliases:     []string{"n"},
+				Usage:       "perform a dry run without creating symlinks",
 				Destination: &dryRun,
 			},
 		},
