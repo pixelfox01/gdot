@@ -3,8 +3,11 @@ package main
 import (
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/urfave/cli/v2"
 )
 
 func createSymlink(source, target string) error {
@@ -18,7 +21,7 @@ func createSymlink(source, target string) error {
 	return nil
 }
 
-func createSymlinks() error {
+func createSymlinks(dryRun bool) error {
 	sourceDir, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("failed to get current working directory: %v", err)
@@ -45,12 +48,20 @@ func createSymlinks() error {
 		targetPath := filepath.Join(targetDir, relPath)
 
 		if info.IsDir() {
+			if dryRun {
+				fmt.Printf("[Dry Run] Directory would be created: %s\n", targetPath)
+				return nil
+			}
 			if err := os.MkdirAll(targetPath, os.ModePerm); err != nil {
 				return fmt.Errorf("failed to create directory: %v", err)
 			}
 			fmt.Printf("Directory created: %s\n", targetPath)
 		} else {
 			targetDir := filepath.Dir(targetPath)
+			if dryRun {
+				fmt.Printf("[Dry Run] Symlink would be created: %s -> %s\n", targetPath, path)
+				return nil
+			}
 			if err := os.MkdirAll(targetDir, os.ModePerm); err != nil {
 				return fmt.Errorf("failed to create parent directory: %v", err)
 			}
@@ -64,8 +75,22 @@ func createSymlinks() error {
 }
 
 func main() {
-	if err := createSymlinks(); err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
+	var dryRun bool
+	app := &cli.App{
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:        "dry-run",
+				Aliases:     []string{"n"},
+				Destination: &dryRun,
+			},
+		},
+		Action: func(cCtx *cli.Context) error {
+			createSymlinks(dryRun)
+			return nil
+		},
+	}
+
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
 	}
 }
