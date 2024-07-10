@@ -45,6 +45,13 @@ func createSymlinks(dryRun bool) error {
 			return fmt.Errorf("failed to get relative path: %v", err)
 		}
 
+		if info.Name() == ".git" || info.Name() == ".gitignore" {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil 
+		}
+
 		targetPath := filepath.Join(targetDir, relPath)
 
 		if info.IsDir() {
